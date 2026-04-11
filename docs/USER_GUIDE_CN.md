@@ -22,15 +22,15 @@ Clash Helen 是一个轻量级的代理客户端，基于 [Mihomo](https://githu
 
 ### 支持的协议
 
-| 协议 | 说明 |
-|------|------|
-| **VLESS** | V2Ray VLESS 协议 |
-| **VMess** | V2Ray VMess 协议 |
-| **Hysteria 2** | 基于 QUIC 的高性能代理 |
-| **Shadowsocks** | 经典代理协议 |
-| **Trojan** | 基于 TLS 的代理协议 |
-| **TUIC** | 基于 QUIC 的代理协议 |
-| **WireGuard** | 现代 VPN 协议 |
+| 协议            | 说明                   |
+| --------------- | ---------------------- |
+| **VLESS**       | V2Ray VLESS 协议       |
+| **VMess**       | V2Ray VMess 协议       |
+| **Hysteria 2**  | 基于 QUIC 的高性能代理 |
+| **Shadowsocks** | 经典代理协议           |
+| **Trojan**      | 基于 TLS 的代理协议    |
+| **TUIC**        | 基于 QUIC 的代理协议   |
+| **WireGuard**   | 现代 VPN 协议          |
 
 以及 Mihomo 内核支持的所有其他协议。
 
@@ -149,11 +149,11 @@ export all_proxy=http://127.0.0.1:7890
 
 ### 第四步：选择路由模式
 
-| 模式 | 说明 | 适用场景 |
-|------|------|----------|
+| 模式     | 说明                            | 适用场景                   |
+| -------- | ------------------------------- | -------------------------- |
 | **规则** | 根据规则分流（域名、IP、GeoIP） | 日常使用，国内直连国外代理 |
-| **全局** | 所有流量走代理 | 需要完全翻墙时 |
-| **直连** | 所有流量直连 | 临时关闭代理 |
+| **全局** | 所有流量走代理                  | 需要完全翻墙时             |
+| **直连** | 所有流量直连                    | 临时关闭代理               |
 
 在托盘菜单或主窗口中切换。
 
@@ -209,11 +209,11 @@ function main(config) {
 
 在「**内核**」页面配置（默认值）：
 
-| 端口 | 协议 | 默认值 |
-|------|------|--------|
-| Mixed | HTTP + SOCKS5 | 7890 |
-| SOCKS5 | 仅 SOCKS5 | 7891 |
-| HTTP | 仅 HTTP | 7892 |
+| 端口   | 协议          | 默认值 |
+| ------ | ------------- | ------ |
+| Mixed  | HTTP + SOCKS5 | 7890   |
+| SOCKS5 | 仅 SOCKS5     | 7891   |
+| HTTP   | 仅 HTTP       | 7892   |
 
 ### 通用设置
 
@@ -326,16 +326,16 @@ sudo service iptables save
 
 在「**设置 → 快捷键**」中配置全局快捷键：
 
-| 功能 | 说明 |
-|------|------|
-| 显示窗口 | 显示/隐藏主窗口 |
-| 切换系统代理 | 开启/关闭系统代理 |
-| 切换 TUN | 开启/关闭 TUN 模式 |
-| 规则模式 | 切换到规则分流 |
-| 全局模式 | 切换到全局代理 |
-| 直连模式 | 切换到直连 |
-| 轻量模式 | 退出应用但保持内核运行 |
-| 重启应用 | 重启 Clash Helen |
+| 功能         | 说明                     |
+| ------------ | ------------------------ |
+| 显示窗口     | 显示/隐藏主窗口          |
+| 切换系统代理 | 开启/关闭系统代理        |
+| 切换 TUN     | 开启/关闭 TUN 模式       |
+| 规则模式     | 切换到规则分流           |
+| 全局模式     | 切换到全局代理           |
+| 直连模式     | 切换到直连               |
+| 轻量模式     | 退出应用但保持内核运行   |
+| 重启应用     | 重启 Clash Helen         |
 | 复制环境变量 | 复制代理环境变量到剪贴板 |
 
 设置方式：点击输入框，按下你想要的组合键（如 `Ctrl+Shift+P`），然后点击确认。按 `Backspace` 清除快捷键。
@@ -432,16 +432,16 @@ curl -x http://127.0.0.1:7890 https://www.google.com
 
 ## 文件路径说明
 
-| 路径 | 说明 |
-|------|------|
-| `~/.config/clash-helen/` | 配置根目录 |
-| `~/.config/clash-helen/config.yaml` | 应用配置 |
-| `~/.config/clash-helen/profiles/` | 订阅配置文件 |
-| `~/.config/clash-helen/override/` | 覆写脚本 |
-| `~/.config/clash-helen/themes/` | 自定义主题 |
-| `~/.config/clash-helen/logs/` | 日志文件 |
-| `/opt/clash-helen/` | 应用程序文件（DEB 安装） |
-| `/opt/clash-helen/resources/sidecar/` | Mihomo 内核二进制文件 |
+| 路径                                  | 说明                     |
+| ------------------------------------- | ------------------------ |
+| `~/.config/clash-helen/`              | 配置根目录               |
+| `~/.config/clash-helen/config.yaml`   | 应用配置                 |
+| `~/.config/clash-helen/profiles/`     | 订阅配置文件             |
+| `~/.config/clash-helen/override/`     | 覆写脚本                 |
+| `~/.config/clash-helen/themes/`       | 自定义主题               |
+| `~/.config/clash-helen/logs/`         | 日志文件                 |
+| `/opt/clash-helen/`                   | 应用程序文件（DEB 安装） |
+| `/opt/clash-helen/resources/sidecar/` | Mihomo 内核二进制文件    |
 
 ---
 

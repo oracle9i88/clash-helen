@@ -18,21 +18,21 @@
 
 ## Features · 功能
 
-| Feature | 功能 |
-|---|---|
-| **TUN Mode** — capture all system traffic | **TUN 模式** — 接管全系统流量 |
-| **System Proxy** — GNOME/KDE/gsettings integration | **系统代理** — 自动配 GNOME/KDE gsettings |
-| **SOCKS5 / HTTP / Mixed proxy ports** | **本地代理端口** — 7890/7891/7892 |
-| **Subscription management** — URL + URI paste import | **订阅管理** — URL 订阅 + URI 粘贴导入 |
-| **URI batch import** — vmess/vless/trojan/ss/hy2/tuic | **URI 批量导入** — 支持全协议 |
-| **Rule / Global / Direct routing modes** | **路由模式** — 规则 / 全局 / 直连 |
-| **Real-time traffic monitor** | **实时流量监控** |
-| **DNS** — DoH / DoT / Fake-IP | **DNS** 配置 |
-| **Override scripts** — JS / YAML config patching | **覆写脚本** — 自定义配置 |
-| **Hysteria 2 port hopping** | **Hysteria 2 端口跳跃** |
-| **System tray + global shortcuts** | **系统托盘 + 全局快捷键** |
-| **Auto-start on boot** | **开机自启** |
-| **5 UI languages** (zh-CN, zh-TW, en-US, fa, ru) | **5 种语言界面** |
+| Feature                                               | 功能                                      |
+| ----------------------------------------------------- | ----------------------------------------- |
+| **TUN Mode** — capture all system traffic             | **TUN 模式** — 接管全系统流量             |
+| **System Proxy** — GNOME/KDE/gsettings integration    | **系统代理** — 自动配 GNOME/KDE gsettings |
+| **SOCKS5 / HTTP / Mixed proxy ports**                 | **本地代理端口** — 7890/7891/7892         |
+| **Subscription management** — URL + URI paste import  | **订阅管理** — URL 订阅 + URI 粘贴导入    |
+| **URI batch import** — vmess/vless/trojan/ss/hy2/tuic | **URI 批量导入** — 支持全协议             |
+| **Rule / Global / Direct routing modes**              | **路由模式** — 规则 / 全局 / 直连         |
+| **Real-time traffic monitor**                         | **实时流量监控**                          |
+| **DNS** — DoH / DoT / Fake-IP                         | **DNS** 配置                              |
+| **Override scripts** — JS / YAML config patching      | **覆写脚本** — 自定义配置                 |
+| **Hysteria 2 port hopping**                           | **Hysteria 2 端口跳跃**                   |
+| **System tray + global shortcuts**                    | **系统托盘 + 全局快捷键**                 |
+| **Auto-start on boot**                                | **开机自启**                              |
+| **5 UI languages** (zh-CN, zh-TW, en-US, fa, ru)      | **5 种语言界面**                          |
 
 ---
 
@@ -44,12 +44,12 @@
 
 ## System Requirements · 系统要求
 
-| Item | 要求 |
-|---|---|
-| OS | Ubuntu 20.04 / 22.04 / 24.04, Debian 11+, Linux Mint 20+ |
-| Architecture | x86_64 (amd64) · ARM64 (aarch64) |
-| Desktop | GNOME, KDE Plasma, XFCE, or any desktop with system tray |
-| RAM | 200 MB+ |
+| Item         | 要求                                                     |
+| ------------ | -------------------------------------------------------- |
+| OS           | Ubuntu 20.04 / 22.04 / 24.04, Debian 11+, Linux Mint 20+ |
+| Architecture | x86_64 (amd64) · ARM64 (aarch64)                         |
+| Desktop      | GNOME, KDE Plasma, XFCE, or any desktop with system tray |
+| RAM          | 200 MB+                                                  |
 
 ---
 
@@ -130,12 +130,14 @@ Drag & drop a `.yaml` file onto the Profiles page, or use **+ → Open File**.
 **System Proxy (browser, most apps) · 系统代理**
 
 Toggle **Sys Proxy** in the sidebar or tray menu.
+
 - Sets GNOME/KDE system proxy automatically (`gsettings`)
 - Port: `7890` (HTTP/HTTPS + SOCKS5 mixed)
 
 **TUN Mode (all traffic) · TUN 模式**
 
 Toggle **TUN** in the sidebar or tray menu.
+
 - Captures 100% of system traffic (no per-app config needed)
 - Requires permission on first use (polkit dialog)
 
@@ -151,11 +153,11 @@ Or click **Copy Env** in the tray menu.
 
 ### 4. Route Mode · 路由模式
 
-| Mode | 说明 |
-|---|---|
-| **Rule** 规则 | Route by domain / IP / GeoIP rules (recommended) |
-| **Global** 全局 | All traffic through proxy |
-| **Direct** 直连 | Bypass proxy entirely |
+| Mode            | 说明                                             |
+| --------------- | ------------------------------------------------ |
+| **Rule** 规则   | Route by domain / IP / GeoIP rules (recommended) |
+| **Global** 全局 | All traffic through proxy                        |
+| **Direct** 直连 | Bypass proxy entirely                            |
 
 Switch from tray menu or the top of the main window.
 
@@ -163,12 +165,12 @@ Switch from tray menu or the top of the main window.
 
 ## Proxy Ports · 代理端口
 
-| Port | Protocol | Usage |
-|---|---|---|
-| **7890** | Mixed (HTTP + SOCKS5) | System proxy, browser, curl |
-| **7891** | SOCKS5 | SOCKS clients |
-| **7892** | HTTP | HTTP-only clients |
-| **9090** | REST API | Mihomo dashboard (browser: `http://127.0.0.1:9090/ui`) |
+| Port     | Protocol              | Usage                                                  |
+| -------- | --------------------- | ------------------------------------------------------ |
+| **7890** | Mixed (HTTP + SOCKS5) | System proxy, browser, curl                            |
+| **7891** | SOCKS5                | SOCKS clients                                          |
+| **7892** | HTTP                  | HTTP-only clients                                      |
+| **9090** | REST API              | Mihomo dashboard (browser: `http://127.0.0.1:9090/ui`) |
 
 Ports configurable in **Core** page.
 
@@ -260,14 +262,14 @@ pnpm dev              # hot-reload dev mode
 
 ## Configuration · 配置文件
 
-| Path | Content |
-|---|---|
-| `~/.config/clash-helen/config.yaml` | App settings |
-| `~/.config/clash-helen/mihomo.yaml` | Controlled mihomo config |
-| `~/.config/clash-helen/profiles/` | Downloaded subscription profiles |
-| `~/.config/clash-helen/override/` | Override scripts |
-| `~/.config/clash-helen/logs/` | App + core logs |
-| `/opt/clash-helen/` | Installed application files |
+| Path                                | Content                          |
+| ----------------------------------- | -------------------------------- |
+| `~/.config/clash-helen/config.yaml` | App settings                     |
+| `~/.config/clash-helen/mihomo.yaml` | Controlled mihomo config         |
+| `~/.config/clash-helen/profiles/`   | Downloaded subscription profiles |
+| `~/.config/clash-helen/override/`   | Override scripts                 |
+| `~/.config/clash-helen/logs/`       | App + core logs                  |
+| `/opt/clash-helen/`                 | Installed application files      |
 
 ---
 
@@ -323,14 +325,14 @@ export ALL_PROXY=socks5://127.0.0.1:7891
 
 Go to **Settings → Shortcuts** to configure. Defaults:
 
-| Action | 说明 |
-|---|---|
-| Toggle window | 显示/隐藏主窗口 |
-| Toggle system proxy | 开关系统代理 |
-| Toggle TUN | 开关 TUN 模式 |
-| Rule / Global / Direct mode | 切换路由模式 |
-| Copy env vars | 复制代理环境变量 |
-| Light mode | 退出界面但保持内核运行 |
+| Action                      | 说明                   |
+| --------------------------- | ---------------------- |
+| Toggle window               | 显示/隐藏主窗口        |
+| Toggle system proxy         | 开关系统代理           |
+| Toggle TUN                  | 开关 TUN 模式          |
+| Rule / Global / Direct mode | 切换路由模式           |
+| Copy env vars               | 复制代理环境变量       |
+| Light mode                  | 退出界面但保持内核运行 |
 
 ---
 

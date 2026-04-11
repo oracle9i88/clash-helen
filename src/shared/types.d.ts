@@ -498,6 +498,7 @@ interface IProfileItem {
   name: string
   url?: string // remote
   file?: string // local
+  rawContent?: string // local pasted content during creation
   interval?: number | string
   home?: string
   updated?: number

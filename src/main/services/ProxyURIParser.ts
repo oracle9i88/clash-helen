@@ -119,8 +119,10 @@ function parseVless(uri: string): ParsedProxy {
   const security = params.get('security') || 'none'
   if (security === 'tls' || security === 'reality') {
     proxy.tls = true
-    if (params.get('sni')) proxy['servername'] = params.get('sni')!
-    if (params.get('fp')) proxy['client-fingerprint'] = params.get('fp')!
+    const sni = params.get('sni')
+    const fingerprint = params.get('fp')
+    if (sni) proxy['servername'] = sni
+    if (fingerprint) proxy['client-fingerprint'] = fingerprint
     if (security === 'reality') {
       proxy['reality-opts'] = {
         'public-key': params.get('pbk') || '',
@@ -164,8 +166,10 @@ function parseTrojan(uri: string): ParsedProxy {
     tls: true
   }
 
-  if (params.get('sni')) proxy['sni'] = params.get('sni')!
-  if (params.get('alpn')) proxy['alpn'] = params.get('alpn')!.split(',')
+  const sni = params.get('sni')
+  const alpn = params.get('alpn')
+  if (sni) proxy['sni'] = sni
+  if (alpn) proxy['alpn'] = alpn.split(',')
 
   const type = params.get('type') || 'tcp'
   if (type === 'ws') {
@@ -242,12 +246,17 @@ function parseHysteria2(uri: string): ParsedProxy {
     password: decodeURIComponent(url.username || url.password || '')
   }
 
-  if (params.get('sni')) proxy.sni = params.get('sni')!
+  const sni = params.get('sni')
+  const obfs = params.get('obfs')
+  const obfsPassword = params.get('obfs-password')
+  const up = params.get('up')
+  const down = params.get('down')
+  if (sni) proxy.sni = sni
   if (params.get('insecure') === '1') proxy['skip-cert-verify'] = true
-  if (params.get('obfs')) proxy.obfs = params.get('obfs')!
-  if (params.get('obfs-password')) proxy['obfs-password'] = params.get('obfs-password')!
-  if (params.get('up')) proxy.up = params.get('up')!
-  if (params.get('down')) proxy.down = params.get('down')!
+  if (obfs) proxy.obfs = obfs
+  if (obfsPassword) proxy['obfs-password'] = obfsPassword
+  if (up) proxy.up = up
+  if (down) proxy.down = down
 
   return proxy
 }
@@ -271,8 +280,10 @@ function parseTuic(uri: string): ParsedProxy {
     'udp-relay-mode': params.get('udp_relay_mode') || 'native'
   }
 
-  if (params.get('sni')) proxy.sni = params.get('sni')!
-  if (params.get('alpn')) proxy.alpn = params.get('alpn')!.split(',')
+  const sni = params.get('sni')
+  const alpn = params.get('alpn')
+  if (sni) proxy.sni = sni
+  if (alpn) proxy.alpn = alpn.split(',')
   if (params.get('disable_sni') === '1') proxy['disable-sni'] = true
   if (params.get('allow_insecure') === '1') proxy['skip-cert-verify'] = true
 

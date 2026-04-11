@@ -44,36 +44,6 @@ async function getLatestAlphaVersion() {
   }
 }
 
-/* ======= mihomo smart ======= */
-const MIHOMO_SMART_VERSION_URL =
-  'https://github.com/vernesong/mihomo/releases/download/Prerelease-Alpha/version.txt'
-const MIHOMO_SMART_URL_PREFIX = `https://github.com/vernesong/mihomo/releases/download/Prerelease-Alpha`
-let MIHOMO_SMART_VERSION
-
-const MIHOMO_SMART_MAP = {
-  'win32-x64': 'mihomo-windows-amd64-v2-go120',
-  'win32-ia32': 'mihomo-windows-386-go120',
-  'win32-arm64': 'mihomo-windows-arm64',
-  'darwin-x64': 'mihomo-darwin-amd64-v2-go120',
-  'darwin-arm64': 'mihomo-darwin-arm64',
-  'linux-x64': 'mihomo-linux-amd64-v2-go120',
-  'linux-arm64': 'mihomo-linux-arm64'
-}
-
-async function getLatestSmartVersion() {
-  try {
-    const response = await fetch(MIHOMO_SMART_VERSION_URL, {
-      method: 'GET'
-    })
-    let v = await response.text()
-    MIHOMO_SMART_VERSION = v.trim() // Trim to remove extra whitespaces
-    console.log(`Latest smart version: ${MIHOMO_SMART_VERSION}`)
-  } catch (error) {
-    console.error('Error fetching latest smart version:', error.message)
-    process.exit(1)
-  }
-}
-
 /* ======= mihomo release ======= */
 const MIHOMO_VERSION_URL =
   'https://github.com/MetaCubeX/mihomo/releases/latest/download/version.txt'
@@ -116,10 +86,6 @@ if (!MIHOMO_ALPHA_MAP[`${platform}-${arch}`]) {
   throw new Error(`unsupported platform "${platform}-${arch}"`)
 }
 
-if (!MIHOMO_SMART_MAP[`${platform}-${arch}`]) {
-  throw new Error(`unsupported platform "${platform}-${arch}"`)
-}
-
 /**
  * core info
  */
@@ -157,22 +123,6 @@ function mihomo() {
   }
 }
 
-function mihomoSmart() {
-  const name = MIHOMO_SMART_MAP[`${platform}-${arch}`]
-  const isWin = platform === 'win32'
-  const urlExt = isWin ? 'zip' : 'gz'
-  const downloadURL = `${MIHOMO_SMART_URL_PREFIX}/${name}-${MIHOMO_SMART_VERSION}.${urlExt}`
-  const exeFile = `${name}${isWin ? '.exe' : ''}`
-  const zipFile = `${name}-${MIHOMO_SMART_VERSION}.${urlExt}`
-
-  return {
-    name: 'mihomo-smart',
-    targetFile: `mihomo-smart${isWin ? '.exe' : ''}`,
-    exeFile,
-    zipFile,
-    downloadURL
-  }
-}
 /**
  * download sidecar and rename
  */
@@ -409,38 +359,11 @@ const resolve7zip = () =>
     file: '7za.exe',
     downloadURL: `https://github.com/develar/7zip-bin/raw/master/win/${arch}/7za.exe`
   })
-const resolveSubstore = () =>
-  resolveResource({
-    file: 'sub-store.bundle.cjs',
-    downloadURL:
-      'https://github.com/sub-store-org/Sub-Store/releases/latest/download/sub-store.bundle.js'
-  })
 const resolveHelper = () =>
   resolveResource({
     file: 'party.mihomo.helper',
     downloadURL: `https://github.com/mihomo-party-org/mihomo-party-helper/releases/download/${arch}/party.mihomo.helper`
   })
-const resolveSubstoreFrontend = async () => {
-  const tempDir = path.join(TEMP_DIR, 'substore-frontend')
-  const tempZip = path.join(tempDir, 'dist.zip')
-  if (!fs.existsSync(tempDir)) {
-    fs.mkdirSync(tempDir, { recursive: true })
-  }
-  await downloadFile(
-    'https://github.com/sub-store-org/Sub-Store-Front-End/releases/latest/download/dist.zip',
-    tempZip
-  )
-  const zip = new AdmZip(tempZip)
-  const resDir = path.join(cwd, 'extra', 'files')
-  const targetPath = path.join(resDir, 'sub-store-frontend')
-  if (fs.existsSync(targetPath)) {
-    fs.rmSync(targetPath, { recursive: true })
-  }
-  zip.extractAllTo(resDir, true)
-  fs.renameSync(path.join(resDir, 'dist'), targetPath)
-
-  console.log(`[INFO]: sub-store-frontend finished`)
-}
 const resolveFont = async () => {
   const targetPath = path.join(cwd, 'src', 'renderer', 'src', 'assets', 'NotoColorEmoji.ttf')
 

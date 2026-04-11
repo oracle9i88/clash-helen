@@ -211,12 +211,8 @@ export async function getLinuxProxyState(): Promise<{
     const { stdout } = await execAsync(`gsettings get org.gnome.system.proxy mode`)
     const mode = stdout.trim().replace(/'/g, '')
     if (mode === 'manual') {
-      const { stdout: host } = await execAsync(
-        `gsettings get org.gnome.system.proxy.http host`
-      )
-      const { stdout: port } = await execAsync(
-        `gsettings get org.gnome.system.proxy.http port`
-      )
+      const { stdout: host } = await execAsync(`gsettings get org.gnome.system.proxy.http host`)
+      const { stdout: port } = await execAsync(`gsettings get org.gnome.system.proxy.http port`)
       return {
         enabled: true,
         host: host.trim().replace(/'/g, ''),

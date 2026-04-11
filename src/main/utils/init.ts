@@ -4,9 +4,7 @@ import { exec } from 'child_process'
 import { promisify } from 'util'
 import path from 'path'
 import { app, dialog } from 'electron'
-import {
-  startPacServer
-} from '../resolve/server'
+import { startPacServer } from '../resolve/server'
 import { triggerSysProxy } from '../sys/sysproxy'
 import {
   getAppConfig,
@@ -251,7 +249,6 @@ async function cleanup(): Promise<void> {
   await Promise.all([...cacheCleanup, ...logCleanup])
 }
 
-
 // 迁移：修复 appTheme
 async function migrateAppTheme(): Promise<void> {
   const { appTheme = 'system' } = await getAppConfig()
@@ -365,9 +362,7 @@ export async function initBasic(): Promise<void> {
 export async function init(): Promise<void> {
   const { sysProxy } = await getAppConfig()
 
-  const initTasks: Promise<void>[] = [
-    startSSIDCheck()
-  ]
+  const initTasks: Promise<void>[] = [startSSIDCheck()]
 
   initTasks.push(
     (async (): Promise<void> => {

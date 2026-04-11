@@ -4,7 +4,6 @@ import { getAppConfig, getControledMihomoConfig } from '../config'
 import { mainWindow } from '../window'
 import { tray } from '../resolve/tray'
 import { calcTraffic } from '../utils/calc'
-
 import { createLogger } from '../utils/logger'
 import { getRuntimeConfig } from './factory'
 import { getMihomoIpcPath } from './manager'
@@ -224,7 +223,6 @@ export const mihomoUpgradeConfig = async (): Promise<void> => {
   }
 }
 
-
 export const startMihomoTraffic = async (): Promise<void> => {
   trafficRetry = MAX_RETRY
   await mihomoTraffic()
@@ -263,7 +261,6 @@ const mihomoTraffic = async (): Promise<void> => {
             `${calcTraffic(json.down)}/s`.padStart(9)
         )
       }
-
     } catch {
       // ignore
     }

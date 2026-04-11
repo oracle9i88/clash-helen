@@ -79,10 +79,7 @@ import {
   setupFirewall
 } from '../sys/misc'
 import { getRuntimeConfig, getRuntimeConfigStr } from '../core/factory'
-import {
-  exportLocalBackup,
-  importLocalBackup
-} from '../resolve/backup'
+import { exportLocalBackup, importLocalBackup } from '../resolve/backup'
 import { getInterfaces } from '../sys/interface'
 import {
   closeTrayIcon,
@@ -163,7 +160,6 @@ async function getRuleStr(id: string): Promise<string> {
 async function setRuleStr(id: string, str: string): Promise<void> {
   await writeFile(rulePath(id), str, 'utf-8')
 }
-
 
 async function fetchIPInfo(url: string): Promise<unknown> {
   const res = await httpGet<unknown>(url, { timeout: 10000, responseType: 'json' })

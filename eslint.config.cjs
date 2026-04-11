@@ -51,6 +51,13 @@ module.exports = [
   },
 
   {
+    files: ['**/*.{ts,tsx}'],
+    rules: {
+      'react/prop-types': 'off'
+    }
+  },
+
+  {
     files: ['**/*.cjs', '**/*.mjs', '**/tailwind.config.js', '**/postcss.config.js'],
     rules: {
       '@typescript-eslint/no-require-imports': 'off',

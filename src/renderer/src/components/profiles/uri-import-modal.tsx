@@ -68,12 +68,16 @@ function detectURIs(text: string): DetectedURI[] {
     try {
       const hashIdx = line.indexOf('#')
       name = hashIdx >= 0 ? decodeURIComponent(line.slice(hashIdx + 1)) : ''
-    } catch {}
+    } catch {
+      // Ignore invalid fragment encoding and fall back to hostname or raw text.
+    }
     if (!name) {
       try {
         const url = new URL(line)
         name = `${url.hostname}:${url.port}`
-      } catch {}
+      } catch {
+        // Ignore malformed URLs and keep the raw line as the display name fallback.
+      }
     }
 
     return { protocol, name: name || line.slice(0, 40), raw: line }
@@ -104,7 +108,6 @@ const URIImportModal: React.FC<Props> = ({ open, onClose, onImported }) => {
       await addProfileItem({
         name: `URI Import (${validCount} proxies)`,
         type: 'local',
-        url: '',
         useProxy: false,
         rawContent: text
       })
@@ -112,7 +115,7 @@ const URIImportModal: React.FC<Props> = ({ open, onClose, onImported }) => {
       onImported()
       onClose()
       setText('')
-    } catch (e) {
+    } catch {
       toast.error(t('common.error.addProfileFailed'))
     } finally {
       setImporting(false)
@@ -134,7 +137,12 @@ const URIImportModal: React.FC<Props> = ({ open, onClose, onImported }) => {
 
         <ModalBody>
           <div className="flex gap-2 mb-2">
-            <Button size="sm" variant="flat" startContent={<MdContentPaste />} onPress={handlePaste}>
+            <Button
+              size="sm"
+              variant="flat"
+              startContent={<MdContentPaste />}
+              onPress={handlePaste}
+            >
               {t('common.paste', 'Paste from Clipboard')}
             </Button>
           </div>
@@ -202,7 +210,10 @@ hysteria2://password@1.2.3.4:443?sni=example.com#HY2Node`}
             isLoading={importing}
             onPress={handleImport}
           >
-            {t('profiles.uri.import', { count: validCount, defaultValue: `Import (${validCount})` })}
+            {t('profiles.uri.import', {
+              count: validCount,
+              defaultValue: `Import (${validCount})`
+            })}
           </Button>
         </ModalFooter>
       </ModalContent>

@@ -7,11 +7,7 @@ import { createWriteStream, existsSync } from 'fs'
 import chokidar, { FSWatcher } from 'chokidar'
 import { app, ipcMain } from 'electron'
 import { mainWindow } from '../window'
-import {
-  getAppConfig,
-  getControledMihomoConfig,
-  patchControledMihomoConfig
-} from '../config'
+import { getAppConfig, getControledMihomoConfig, patchControledMihomoConfig } from '../config'
 import {
   dataDir,
   coreLogPath,

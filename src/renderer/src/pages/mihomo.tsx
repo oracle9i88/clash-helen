@@ -25,13 +25,7 @@ import { useAppConfig } from '@renderer/hooks/use-app-config'
 import { useControledMihomoConfig } from '@renderer/hooks/use-controled-mihomo-config'
 import { platform } from '@renderer/utils/init'
 import { FaNetworkWired } from 'react-icons/fa'
-import {
-  IoMdCloudDownload,
-  IoMdRefresh,
-  IoMdShuffle,
-  IoMdEye,
-  IoMdEyeOff
-} from 'react-icons/io'
+import { IoMdCloudDownload, IoMdRefresh, IoMdShuffle, IoMdEye, IoMdEyeOff } from 'react-icons/io'
 import PubSub from 'pubsub-js'
 import {
   mihomoUpgrade,
@@ -481,10 +475,7 @@ const Mihomo: React.FC = () => {
               selectedKeys={new Set([core])}
               disallowEmptySelection={true}
               onSelectionChange={async (v) => {
-                const selectedCore = v.currentKey as
-                  | 'mihomo'
-                  | 'mihomo-alpha'
-                  | 'mihomo-specific'
+                const selectedCore = v.currentKey as 'mihomo' | 'mihomo-alpha' | 'mihomo-specific'
                 if (selectedCore === 'mihomo-specific' && !specificVersion) {
                   handleOpenModal()
                 } else {

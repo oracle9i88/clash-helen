@@ -59,12 +59,12 @@ function processRulesWithOffset(ruleStrings: string[], currentRules: string[], i
   return { normalRules, insertRules: rules }
 }
 
-function applyHysteria2PortHopping(
-  profile: IMihomoConfig,
-  appConfig: IAppConfig
-): IMihomoConfig {
-  const { hysteria2PortHopping, hysteria2Ports = '20000-40000', hysteria2HopInterval = 30 } =
-    appConfig
+function applyHysteria2PortHopping(profile: IMihomoConfig, appConfig: IAppConfig): IMihomoConfig {
+  const {
+    hysteria2PortHopping,
+    hysteria2Ports = '20000-40000',
+    hysteria2HopInterval = 30
+  } = appConfig
   if (!hysteria2PortHopping || !Array.isArray(profile.proxies)) {
     return profile
   }

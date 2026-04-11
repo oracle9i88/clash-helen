@@ -10,13 +10,12 @@
 
 import { readFile, writeFile, mkdir } from 'fs/promises'
 import { existsSync } from 'fs'
-import path from 'path'
 import axios from 'axios'
+import { getAppConfig } from '../config'
 import { parse, stringify } from '../utils/yaml'
 import { profilesDir, profilePath } from '../utils/dirs'
-import { parseProxyURIs, ParsedProxy } from './ProxyURIParser'
 import { createLogger } from '../utils/logger'
-import { getAppConfig } from '../config'
+import { parseProxyURIs, ParsedProxy } from './ProxyURIParser'
 
 const log = createLogger('SubscriptionService')
 
@@ -45,7 +44,8 @@ export async function fetchSubscription(url: string, opts: FetchOptions = {}): P
     try {
       const appConfig = await getAppConfig()
       const port = 7890
-      if (appConfig.sysProxy?.mode !== 'off') {
+      const sysProxyMode = appConfig.sysProxy?.mode
+      if (sysProxyMode === 'auto' || sysProxyMode === 'manual') {
         proxyConfig = { host: '127.0.0.1', port }
       }
     } catch {
@@ -139,9 +139,7 @@ export function validateProfileYaml(yaml: string): { valid: boolean; error?: str
 
 function isClashYaml(text: string): boolean {
   return (
-    text.includes('proxies:') ||
-    text.includes('proxy-groups:') ||
-    text.includes('proxy-providers:')
+    text.includes('proxies:') || text.includes('proxy-groups:') || text.includes('proxy-providers:')
   )
 }
 
@@ -198,10 +196,6 @@ function buildMinimalClashConfig(proxies: ParsedProxy[]): Record<string, unknown
         tolerance: 50
       }
     ],
-    rules: [
-      'GEOIP,CN,DIRECT',
-      'GEOIP,private,DIRECT',
-      'MATCH,PROXY'
-    ]
+    rules: ['GEOIP,CN,DIRECT', 'GEOIP,private,DIRECT', 'MATCH,PROXY']
   }
 }

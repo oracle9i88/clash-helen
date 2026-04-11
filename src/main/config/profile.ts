@@ -241,7 +241,7 @@ export async function createProfile(item: Partial<IProfileItem>): Promise<IProfi
 
   // Local
   if (newItem.type === 'local') {
-    await setProfileStr(id, item.file || '')
+    await setProfileStr(id, item.rawContent || item.file || '')
     return newItem
   }
 
