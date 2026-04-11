@@ -1,0 +1,18 @@
+[Allow ClashHelen TUN — sudo group auto-approve]
+Identity=unix-group:sudo
+Action=org.freedesktop.policykit.exec
+ResultAny=yes
+ResultInactive=yes
+ResultActive=yes
+
+[Allow ClashHelen TUN — admin group auto-approve]
+Identity=unix-group:admin
+Action=org.freedesktop.policykit.exec
+ResultAny=yes
+ResultInactive=yes
+ResultActive=yes
+
+[Allow ClashHelen net capabilities]
+Identity=unix-user:*
+Action=net.clash-helen.mihomo-capabilities
+ResultActive=auth_admin_keep

@@ -1,0 +1,204 @@
+name: Build ClashHelen
+
+on:
+  push:
+    tags:
+      - 'v*'
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/workflows/issues.yml'
+  workflow_dispatch:
+    inputs:
+      version_suffix:
+        description: 'Dev build suffix (e.g. beta.1)'
+        required: false
+        default: ''
+
+permissions: write-all
+
+jobs:
+  # ──────────────────────────────────────────────────────────────────────────
+  # Clean up previous dev release assets
+  # ──────────────────────────────────────────────────────────────────────────
+  cleanup-dev-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete Dev Release Assets
+        if: github.event_name == 'workflow_dispatch'
+        continue-on-error: true
+        run: |
+          echo "Looking for existing dev release..."
+          RELEASE_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/dev" | \
+            jq -r '.id // empty')
+
+          if [ -n "$RELEASE_ID" ] && [ "$RELEASE_ID" != "empty" ]; then
+            echo "Found dev release ID: $RELEASE_ID — deleting assets..."
+            PAGE=1
+            while true; do
+              ASSETS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                "https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?page=$PAGE&per_page=100")
+              COUNT=$(echo "$ASSETS" | jq '. | length')
+              [ "$COUNT" -eq 0 ] && break
+              echo "$ASSETS" | jq -r '.[].id' | while read id; do
+                curl -s -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                  "https://api.github.com/repos/${{ github.repository }}/releases/assets/$id"
+                sleep 0.3
+              done
+              [ "$COUNT" -lt 100 ] && break
+              PAGE=$((PAGE + 1))
+            done
+          else
+            echo "No existing dev release found"
+          fi
+
+      - name: Skip for Tag Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: echo "Tag release — skipping dev cleanup"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Linux (Ubuntu) — primary target
+  # ──────────────────────────────────────────────────────────────────────────
+  linux:
+    needs: [cleanup-dev-release]
+    if: always() && (startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch')
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - x64
+          - arm64
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install system dependencies (arm64 cross-compile)
+        if: matrix.arch == 'arm64'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
+      - name: Install Dependencies
+        env:
+          npm_config_arch: ${{ matrix.arch }}
+          npm_config_target_arch: ${{ matrix.arch }}
+        run: pnpm install
+
+      - name: Update Version for Dev Build
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GITHUB_EVENT_NAME: workflow_dispatch
+        run: node scripts/update-version.mjs
+
+      - name: Download mihomo binaries
+        run: pnpm prepare --${{ matrix.arch }}
+
+      - name: Build Linux packages
+        env:
+          npm_config_arch: ${{ matrix.arch }}
+          npm_config_target_arch: ${{ matrix.arch }}
+        run: pnpm build:linux --${{ matrix.arch }}
+
+      - name: Generate checksums
+        run: pnpm checksum .deb .rpm .AppImage
+
+      - name: Upload Artifacts (branch build)
+        if: startsWith(github.ref, 'refs/heads/')
+        uses: actions/upload-artifact@v4
+        with:
+          name: Linux-${{ matrix.arch }}
+          path: |
+            dist/*.sha256
+            dist/*.deb
+            dist/*.rpm
+            dist/*.AppImage
+          if-no-files-found: error
+
+      - name: Publish Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.sha256
+            dist/*.deb
+            dist/*.rpm
+            dist/*.AppImage
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish Dev Release
+        if: github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: dev
+          name: 'ClashHelen Dev Build'
+          files: |
+            dist/*.sha256
+            dist/*.deb
+            dist/*.rpm
+            dist/*.AppImage
+          prerelease: true
+          draft: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Updater manifest
+  # ──────────────────────────────────────────────────────────────────────────
+  updater:
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    needs: [linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install
+
+      - name: Update Version for Dev Build
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GITHUB_EVENT_NAME: workflow_dispatch
+        run: node scripts/update-version.mjs
+
+      - name: Generate latest.yml
+        run: pnpm updater
+
+      - name: Publish Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: latest.yml
+          body_path: changelog.md
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish Dev Release
+        if: github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: dev
+          files: latest.yml
+          body_path: changelog.md
+          prerelease: true
+          draft: false
+          token: ${{ secrets.GITHUB_TOKEN }}
