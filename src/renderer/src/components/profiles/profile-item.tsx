@@ -27,7 +27,7 @@ import EditFileModal from './edit-file-modal'
 interface Props {
   info: IProfileItem
   isCurrent: boolean
-  addProfileItem: (item: Partial<IProfileItem>) => Promise<void>
+  addProfileItem: (item: IProfileImportItem) => Promise<void>
   updateProfileItem: (item: IProfileItem) => Promise<void>
   removeProfileItem: (id: string) => Promise<void>
   mutateProfileConfig: () => void

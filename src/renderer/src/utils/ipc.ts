@@ -53,7 +53,7 @@ interface IpcApi {
   getProfileItem: (id: string | undefined) => Promise<IProfileItem>
   getProfileStr: (id: string) => Promise<string>
   setProfileStr: (id: string, str: string) => Promise<void>
-  addProfileItem: (item: Partial<IProfileItem>) => Promise<void>
+  addProfileItem: (item: IProfileImportItem) => Promise<void>
   removeProfileItem: (id: string) => Promise<void>
   updateProfileItem: (item: IProfileItem) => Promise<void>
   changeCurrentProfile: (id: string) => Promise<void>

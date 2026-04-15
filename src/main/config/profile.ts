@@ -13,6 +13,7 @@ import { mihomoProfileWorkDir, mihomoWorkDir, profileConfigPath, profilePath } f
 import { createLogger } from '../utils/logger'
 import { getAppConfig } from './app'
 import { getControledMihomoConfig } from './controledMihomo'
+import { parseSubscriptionContent } from '../services/SubscriptionService'
 
 const profileLogger = createLogger('Profile')
 
@@ -103,7 +104,7 @@ export async function updateProfileItem(item: IProfileItem): Promise<void> {
   })
 }
 
-export async function addProfileItem(item: Partial<IProfileItem>): Promise<void> {
+export async function addProfileItem(item: IProfileImportItem): Promise<void> {
   const newItem = await createProfile(item)
   let shouldChangeCurrent = false
   let newProfileIsCurrentAfterUpdate = false
@@ -221,7 +222,7 @@ async function fetchAndValidateSubscription(options: FetchOptions): Promise<Fetc
   return { data: res.data, headers: res.headers }
 }
 
-export async function createProfile(item: Partial<IProfileItem>): Promise<IProfileItem> {
+export async function createProfile(item: IProfileImportItem): Promise<IProfileItem> {
   const id = item.id || new Date().getTime().toString(16)
   const newItem: IProfileItem = {
     id,
@@ -241,7 +242,11 @@ export async function createProfile(item: Partial<IProfileItem>): Promise<IProfi
 
   // Local
   if (newItem.type === 'local') {
-    await setProfileStr(id, item.file || '')
+    const content =
+      typeof item.rawContent === 'string'
+        ? parseSubscriptionContent(item.rawContent)
+        : item.file || ''
+    await setProfileStr(id, content)
     return newItem
   }
 

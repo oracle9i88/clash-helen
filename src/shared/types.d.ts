@@ -511,6 +511,10 @@ interface IProfileItem {
   updateTimeout?: number
 }
 
+interface IProfileImportItem extends Partial<IProfileItem> {
+  rawContent?: string
+}
+
 interface ISubStoreSub {
   name: string
   displayName?: string

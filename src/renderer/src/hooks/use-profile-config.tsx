@@ -21,7 +21,7 @@ interface ProfileConfigContextType {
   profileConfig: IProfileConfig | undefined
   setProfileConfig: (config: IProfileConfig) => Promise<void>
   mutateProfileConfig: () => void
-  addProfileItem: (item: Partial<IProfileItem>) => Promise<void>
+  addProfileItem: (item: IProfileImportItem) => Promise<void>
   updateProfileItem: (item: IProfileItem) => Promise<void>
   removeProfileItem: (id: string) => Promise<void>
   changeCurrentProfile: (id: string) => Promise<void>
@@ -67,7 +67,7 @@ const ProfileConfigContextWrapper: React.FC<{ children: ReactNode }> = ({ childr
   )
 
   const addProfileItem = useCallback(
-    (item: Partial<IProfileItem>) =>
+    (item: IProfileImportItem) =>
       withErrorHandling(() => add(item), 'common.error.addProfileFailed')(),
     [withErrorHandling]
   )
