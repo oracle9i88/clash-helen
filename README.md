@@ -250,6 +250,66 @@ pnpm prepare          # download mihomo core binaries
 pnpm build:linux      # build .deb, .rpm, .AppImage → dist/
 ```
 
+### 构建指定分支的修复版（Kimi 专用指引）
+
+如果你是 AI 助手在帮用户构建修复版（`fix/import-and-rules` 分支），按以下完整流程执行，不要跳步：
+
+```bash
+# 1. 装系统依赖（Ubuntu 20.04/22.04/24.04）
+sudo apt update
+sudo apt install -y git curl
+
+# 2. 装 Node.js 22 + pnpm 10（若已有可跳过）
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt install -y nodejs
+sudo npm install -g pnpm@10
+
+# 3. 拉取修复分支
+git clone https://github.com/oracle9i88/clash-helen.git
+cd clash-helen
+git checkout fix/import-and-rules
+
+# 4. 构建（5-10 分钟）
+pnpm install
+pnpm prepare
+pnpm build:linux
+
+# 5. 安装产物（.deb 在 dist/ 目录下）
+sudo apt install ./dist/clash-helen-linux-*-amd64.deb
+```
+
+> ⚠️ 构建需要约 2GB 内存；若机器内存小，先加 swap：`sudo fallocate -l 4G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile`
+
+### 安装后验证（逐项执行，全部应通过）
+
+```bash
+# ① 启动 app（图形界面，或先日志排查）
+clash-helen
+
+# ② 验证 hy2 节点导入（这是本次修复的核心）
+#    打开「订阅管理」→「导入 URI」，粘贴你的 hysteria2:// 或 hy2:// 节点
+#    预期：导入成功后订阅里能看到节点；失败时会弹出具体错误信息（不再是空成功）
+
+# ③ 验证规则编辑立即生效
+#    「订阅管理」→ 点击订阅卡片 →「编辑规则」→ 加一条 DOMAIN-SUFFIX,example.com,DIRECT → 保存
+#    预期：保存后内核自动重载，立即生效（不再需要重启 app）
+
+# ④ 验证 TUN 断网自愈（最重要）
+#    打开「TUN 模式」→ 确认能上网 → 终端执行：
+sudo killall -9 mihomo
+#    预期：90 秒内 app 自动发现核心挂死并恢复；若恢复失败，
+#         自动关闭 TUN、清除残留路由、恢复 DNS —— 机器不会断网
+#    若手动恢复（旧版本或兜底失败时）：
+sudo ip link delete Mihomo
+sudo cp /var/tmp/clash-helen-resolv.conf.bak $(readlink -f /etc/resolv.conf)
+sudo systemctl restart NetworkManager
+```
+
+**验证通过的判定标准**：
+- ②③④ 全部符合预期 → 修复版构建成功
+- ② 失败 → 把弹出的错误信息和节点 URI 格式（密码可打码）反馈给开发者
+- ④ 手动恢复命令都无效 → 检查 `getcap /opt/clash-helen/resources/sidecar/mihomo` 是否有 `cap_net_admin`
+
 ### Development
 
 ```bash
@@ -316,6 +376,16 @@ export ALL_PROXY=socks5://127.0.0.1:7891
 
 - Enable **Use Proxy** on the profile card (uses current proxy to download)
 - Increase timeout: Settings → Subscription Timeout
+
+**TUN 开启后断网（国内外全断，修复版自带自愈）**
+
+修复版已内置三层防护：核心看门狗（90s 无响应自动强杀重启）→ 重启失败自动安全降级（关 TUN、清路由、恢复 DNS）→ 极端情况手动恢复：
+
+```bash
+sudo ip link delete Mihomo
+sudo cp /var/tmp/clash-helen-resolv.conf.bak $(readlink -f /etc/resolv.conf) 2>/dev/null || true
+sudo systemctl restart NetworkManager
+```
 
 ---
 

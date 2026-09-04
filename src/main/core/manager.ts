@@ -37,7 +37,8 @@ import {
   stopMihomoLogs,
   stopMihomoMemory,
   patchMihomoConfig,
-  getAxios
+  getAxios,
+  mihomoVersion
 } from './mihomoApi'
 import { generateProfile } from './factory'
 import { getSessionAdminStatus } from './permissions'
@@ -48,6 +49,7 @@ import {
   waitForCoreReady
 } from './process'
 import { setPublicDNS, recoverDNS } from './dns'
+import { cleanupTunRoutes, degradeTunSafety } from './tun-recovery'
 
 // 重新导出权限相关函数
 export {
@@ -74,6 +76,70 @@ const ctlParam = process.platform === 'win32' ? '-ext-ctl-pipe' : '-ext-ctl-unix
 let child: ChildProcess
 let retry = 10
 let isRestarting = false
+
+// ── 核心看门狗 ──────────────────────────────────────────────
+// 核心进程 hang 住（活着但不干活）时 close 事件永不触发，原有自动重启
+// 完全不会启动，TUN 路由/DNS 被抢走没人还，机器断网。看门狗周期探测
+// 核心 API，连续失败到阈值就强杀重启；恢复失败就安全降级（关 TUN 保网络）。
+let watchdogTimer: NodeJS.Timeout | null = null
+let watchdogMisses = 0
+
+const WATCHDOG_INTERVAL_MS = 30_000
+const WATCHDOG_MAX_MISSES = 3 // 连续 3 次探测失败（约 90s 无响应）= hang
+
+export function startCoreWatchdog(): void {
+  stopCoreWatchdog()
+  watchdogMisses = 0
+  watchdogTimer = setInterval(() => {
+    void probeCore()
+  }, WATCHDOG_INTERVAL_MS)
+  managerLogger.info('Core watchdog started (30s interval, 3-miss threshold)')
+}
+
+export function stopCoreWatchdog(): void {
+  if (watchdogTimer) {
+    clearInterval(watchdogTimer)
+    watchdogTimer = null
+    managerLogger.info('Core watchdog stopped')
+  }
+}
+
+async function probeCore(): Promise<void> {
+  if (isRestarting || !child || child.exitCode !== null) return
+  try {
+    await mihomoVersion()
+    watchdogMisses = 0
+    return
+  } catch {
+    watchdogMisses++
+    managerLogger.warn(`Core watchdog: probe missed (${watchdogMisses}/${WATCHDOG_MAX_MISSES})`)
+    if (watchdogMisses < WATCHDOG_MAX_MISSES) return
+  }
+
+  // 连续 miss：核心 hang 死。强杀，让 close 事件走原有重启路径。
+  watchdogMisses = 0
+  managerLogger.error('Core watchdog: core unresponsive, killing for restart')
+  try {
+    child.kill('SIGKILL')
+  } catch (error) {
+    managerLogger.error('Watchdog kill failed', error)
+  }
+
+  // close handler 的 retry 烧完后 stopCore 不清 TUN——这里兜底：杀掉后
+  // 给重启 15 秒，API 仍不可达就安全降级（关 TUN、清路由、恢复 DNS）。
+  setTimeout(() => {
+    void (async () => {
+      if (isRestarting) return
+      try {
+        await mihomoVersion()
+        managerLogger.info('Core watchdog: core recovered after kill')
+      } catch {
+        managerLogger.error('Core still dead after watchdog kill — degrading TUN to save the network')
+        await degradeTunSafety()
+      }
+    })()
+  }, 15_000)
+}
 
 // 文件监听器
 let coreWatcher: FSWatcher | null = null
@@ -231,6 +297,7 @@ function setupCoreListeners(
 ): void {
   proc.on('close', async (code, signal) => {
     managerLogger.info(`Core closed, code: ${code}, signal: ${signal}`)
+    stopCoreWatchdog()
 
     if (isRestarting) {
       managerLogger.info('Core closed during restart, skipping auto-restart')
@@ -242,7 +309,11 @@ function setupCoreListeners(
       retry--
       await restartCore()
     } else {
-      await stopCore()
+      // retry 烧完：核心起不来了。若 TUN 开着，路由和 DNS 还被抢着——
+      // 安全降级（关 TUN、清路由、恢复 DNS），保住系统网络。
+      managerLogger.error('Core restart retries exhausted — degrading TUN to preserve network')
+      await degradeTunSafety()
+      await stopCore(true)
     }
   })
 
@@ -316,6 +387,8 @@ function setupCoreListeners(
       await startMihomoLogs()
       await startMihomoMemory()
       retry = 10
+      // 核心就绪：挂上看门狗（hang 死自愈）
+      startCoreWatchdog()
     }
   })
 }
@@ -348,10 +421,15 @@ export async function stopCore(force = false): Promise<void> {
     managerLogger.error('recover dns failed', error)
   }
 
+  stopCoreWatchdog()
+
   if (child) {
     child.removeAllListeners()
     child.kill('SIGINT')
   }
+
+  // TUN 模式下核心退出可能来不及删路由/DNS 劫持——主动清理，防止断网黑洞
+  await cleanupTunRoutes()
 
   stopMihomoTraffic()
   stopMihomoConnections()
