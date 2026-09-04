@@ -38,7 +38,18 @@ export interface FetchOptions {
 export async function fetchSubscription(url: string, opts: FetchOptions = {}): Promise<string> {
   const { userAgent = DEFAULT_UA, authToken, timeout = 30000 } = opts
 
-  const proxyConfig = opts.useProxy ? { host: '127.0.0.1', port: 7890 } : undefined
+  // Read the live mixed-port instead of hardcoding 7890: users who changed the
+  // port in settings got a dead proxy fallback for "update via proxy".
+  let proxyPort = 7890
+  try {
+    const { getControledMihomoConfig } = await import('../config/controledMihomo')
+    const { 'mixed-port': mixedPort } = await getControledMihomoConfig()
+    if (typeof mixedPort === 'number' && mixedPort > 0) proxyPort = mixedPort
+  } catch {
+    // config not ready — keep default
+  }
+
+  const proxyConfig = opts.useProxy ? { host: '127.0.0.1', port: proxyPort } : undefined
 
   const headers: Record<string, string> = { 'User-Agent': userAgent }
   if (authToken) headers['Authorization'] = `Bearer ${authToken}`
@@ -152,7 +163,11 @@ function normalizeClashYaml(yaml: string): string {
 function uriListToYaml(text: string): string {
   const proxies = parseProxyURIs(text)
   if (proxies.length === 0) {
-    log.warn('No valid proxy URIs found in subscription content')
+    // Do NOT silently produce an empty config: the UI shows "import success"
+    // while nothing landed. Surface the failure so callers can toast it.
+    throw new Error(
+      'No valid proxy URIs found — check that each line is a complete vmess/vless/trojan/ss/hysteria2/tuic URI'
+    )
   }
 
   const config = buildMinimalClashConfig(proxies)

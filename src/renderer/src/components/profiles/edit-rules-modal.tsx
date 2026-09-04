@@ -24,7 +24,7 @@ import React, {
   memo,
   useDeferredValue
 } from 'react'
-import { getProfileStr, setRuleStr, getRuleStr } from '@renderer/utils/ipc'
+import { getProfileStr, setRuleStr, getRuleStr, restartCore } from '@renderer/utils/ipc'
 import { useTranslation } from 'react-i18next'
 import yaml from 'js-yaml'
 import { Virtuoso } from 'react-virtuoso'
@@ -898,6 +898,20 @@ const EditRulesModal: React.FC<Props> = (props) => {
       // 保存到 YAML 文件
       const ruleYaml = yaml.dump(ruleData)
       await setRuleStr(id, ruleYaml)
+      // The rule file is merged into the runtime config only when the core
+      // (re)generates its working config. Without this restart the saved rules
+      // silently never apply until the next app restart.
+      try {
+        await restartCore()
+      } catch (restartError) {
+        // Rules are saved; core restart failed. Tell the user instead of
+        // letting them assume the rules are live.
+        toast.error(
+          t('profiles.editRules.restartError') +
+            ': ' +
+            (restartError instanceof Error ? restartError.message : String(restartError))
+        )
+      }
       onClose()
     } catch (e) {
       toast.error(

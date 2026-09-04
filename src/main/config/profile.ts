@@ -211,7 +211,32 @@ async function fetchAndValidateSubscription(options: FetchOptions): Promise<Fetc
     throw new Error(`Subscription failed: Request status code ${res.status}`)
   }
 
-  const parsed = parse(res.data) as Record<string, unknown> | null
+  // Many providers (especially hy2/hysteria2-heavy ones) return a base64 URI
+  // list (v2ray format) instead of Clash YAML. Normalize through
+  // parseSubscriptionContent: it handles Clash YAML, base64 blobs and raw URI
+  // lines, converting the latter two into a minimal mihomo config.
+  let content = res.data
+  try {
+    const asYaml = parse(content) as Record<string, unknown> | null
+    const isClashYaml =
+      typeof asYaml === 'object' &&
+      asYaml !== null &&
+      (asYaml['proxies'] || asYaml['proxy-providers'])
+    if (!isClashYaml) {
+      content = parseSubscriptionContent(content)
+    }
+  } catch {
+    // Not parseable as YAML at all — try the normalizer before giving up.
+    try {
+      content = parseSubscriptionContent(content)
+    } catch (e) {
+      throw new Error(
+        `Subscription failed: Profile is not valid Clash YAML or a URI list (${e instanceof Error ? e.message : String(e)})`
+      )
+    }
+  }
+
+  const parsed = parse(content) as Record<string, unknown> | null
   if (typeof parsed !== 'object' || parsed === null) {
     throw new Error('Subscription failed: Profile is not a valid YAML')
   }
@@ -219,7 +244,7 @@ async function fetchAndValidateSubscription(options: FetchOptions): Promise<Fetc
     throw new Error('Subscription failed: Profile missing proxies or providers')
   }
 
-  return { data: res.data, headers: res.headers }
+  return { data: content, headers: res.headers }
 }
 
 export async function createProfile(item: IProfileImportItem): Promise<IProfileItem> {

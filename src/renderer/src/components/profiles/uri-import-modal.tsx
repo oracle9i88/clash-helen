@@ -113,7 +113,8 @@ const URIImportModal: React.FC<Props> = ({ open, onClose, onImported }) => {
       onClose()
       setText('')
     } catch (e) {
-      toast.error(t('common.error.addProfileFailed'))
+      const msg = e instanceof Error ? e.message : typeof e === 'string' ? e : ''
+      toast.error(msg || t('common.error.addProfileFailed'))
     } finally {
       setImporting(false)
     }
@@ -134,7 +135,12 @@ const URIImportModal: React.FC<Props> = ({ open, onClose, onImported }) => {
 
         <ModalBody>
           <div className="flex gap-2 mb-2">
-            <Button size="sm" variant="flat" startContent={<MdContentPaste />} onPress={handlePaste}>
+            <Button
+              size="sm"
+              variant="flat"
+              startContent={<MdContentPaste />}
+              onPress={handlePaste}
+            >
               {t('common.paste', 'Paste from Clipboard')}
             </Button>
           </div>
@@ -202,7 +208,10 @@ hysteria2://password@1.2.3.4:443?sni=example.com#HY2Node`}
             isLoading={importing}
             onPress={handleImport}
           >
-            {t('profiles.uri.import', { count: validCount, defaultValue: `Import (${validCount})` })}
+            {t('profiles.uri.import', {
+              count: validCount,
+              defaultValue: `Import (${validCount})`
+            })}
           </Button>
         </ModalFooter>
       </ModalContent>

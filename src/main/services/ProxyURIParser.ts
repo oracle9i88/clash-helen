@@ -68,7 +68,9 @@ function parseVmess(uri: string): ParsedProxy {
   const json = Buffer.from(padBase64(b64), 'base64').toString('utf-8')
   const obj = JSON.parse(json) as Record<string, unknown>
 
-  const port = parseInt(String(obj.port || obj.v || 443), 10)
+  // `v` is the vmess URI JSON *version* (usually "2"), NOT the port. Only fall
+  // back to 443 when no explicit port is present.
+  const port = parseInt(String(obj.port || 443), 10)
   const proxy: ParsedProxy = {
     name: String(obj.ps || obj.name || `${obj.add}:${port}`),
     type: 'vmess',
@@ -108,10 +110,10 @@ function parseVless(uri: string): ParsedProxy {
   const params = url.searchParams
 
   const proxy: ParsedProxy = {
-    name: decodeURIComponent(url.hash.slice(1) || `${url.hostname}:${url.port}`),
+    name: safeDecodeFragment(url.hash.slice(1) || `${url.hostname}:${url.port}`),
     type: 'vless',
     server: url.hostname,
-    port: parseInt(url.port, 10),
+    port: parseInt(url.port || '443', 10),
     uuid: url.username,
     cipher: 'none'
   }
@@ -230,16 +232,55 @@ function parseSS(uri: string): ParsedProxy {
 // ──────────────────────────────────────────────
 
 function parseHysteria2(uri: string): ParsedProxy {
-  const normalized = uri.replace(/^hy2:\/\//, 'hysteria2://')
-  const url = new URL(normalized)
-  const params = url.searchParams
+  // Manual parsing: passwords commonly contain raw '%', '@' or ':' which break
+  // `new URL()` (throws on invalid percent-encoding) or silently split into
+  // username/password parts. Split on the LAST '@' and treat everything before
+  // it as the raw credential, exactly like the URI producer intended.
+  const withoutScheme = uri.replace(/^hysteria2:\/\//i, '').replace(/^hy2:\/\//i, '')
+
+  // Split off the fragment (#name) first — it can contain '@'
+  const hashIdx = withoutScheme.indexOf('#')
+  const fragment = hashIdx >= 0 ? withoutScheme.slice(hashIdx + 1) : ''
+  const main = hashIdx >= 0 ? withoutScheme.slice(0, hashIdx) : withoutScheme
+
+  // Split off query params (?sni=...) — credentials can contain '?' too in
+  // theory, but real-world hy2 URIs put the query after the host:port
+  const queryIdx = main.indexOf('?')
+  const query = queryIdx >= 0 ? main.slice(queryIdx + 1) : ''
+  const beforeQuery = queryIdx >= 0 ? main.slice(0, queryIdx) : main
+
+  // Split credential@host:port on the LAST '@' so passwords may contain '@'
+  const atIdx = beforeQuery.lastIndexOf('@')
+  const password = atIdx >= 0 ? beforeQuery.slice(0, atIdx) : ''
+  const hostPort = atIdx >= 0 ? beforeQuery.slice(atIdx + 1) : beforeQuery
+
+  // IPv6: [::1]:443
+  let server: string
+  let portStr: string
+  if (hostPort.startsWith('[')) {
+    const closeIdx = hostPort.indexOf(']')
+    server = hostPort.slice(1, closeIdx)
+    portStr = hostPort.slice(closeIdx + 2) // skip ']:'
+  } else {
+    const lastColon = hostPort.lastIndexOf(':')
+    if (lastColon === -1) {
+      // No port at all — whole thing is the host, default port applies
+      server = hostPort
+      portStr = ''
+    } else {
+      server = hostPort.slice(0, lastColon)
+      portStr = hostPort.slice(lastColon + 1)
+    }
+  }
+
+  const params = new URLSearchParams(query)
 
   const proxy: ParsedProxy = {
-    name: decodeURIComponent(url.hash.slice(1) || `${url.hostname}:${url.port}`),
+    name: safeDecodeFragment(fragment) || `${server}:${portStr}`,
     type: 'hysteria2',
-    server: url.hostname,
-    port: parseInt(url.port || '443', 10),
-    password: decodeURIComponent(url.username || url.password || '')
+    server,
+    port: parseInt(portStr || '443', 10),
+    password
   }
 
   if (params.get('sni')) proxy.sni = params.get('sni')!
@@ -250,6 +291,15 @@ function parseHysteria2(uri: string): ParsedProxy {
   if (params.get('down')) proxy.down = params.get('down')!
 
   return proxy
+}
+
+function safeDecodeFragment(s: string): string {
+  if (!s) return ''
+  try {
+    return decodeURIComponent(s)
+  } catch {
+    return s
+  }
 }
 
 // ──────────────────────────────────────────────

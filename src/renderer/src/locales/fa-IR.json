@@ -514,6 +514,7 @@
   "profiles.editRules.noRules": "بدون قانون",
   "profiles.editRules.noMatchingRules": "قانونی یافت نشد",
   "profiles.editRules.saveError": "خطا در ذخیره قوانین",
+  "profiles.editRules.restartError": "قوانین ذخیره شدند اما راه‌اندازی مجدد هسته ناموفق بود",
   "profiles.editRules.noResolve": "رد کردن تحلیل DNS (no-resolve)",
   "profiles.editRules.src": "مطابقت با IP منبع (src)",
   "profiles.openFile": "باز کردن فایل",
