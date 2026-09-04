@@ -227,6 +227,69 @@ sudo apt install iptables-persistent && sudo netfilter-persistent save
 
 ---
 
+## 🚀 给 AI 助手的完整构建指引（从这里开始，照做即可）
+
+> **如果你是 Kimi 或其他 AI 助手**：用户让你读这个 README 干活，就从本节开始。
+> 本仓库 main 分支已包含全部最新修复（hy2 节点导入、base64 订阅、规则即时生效、TUN 断网自愈）。
+> 按下面流程逐条执行，不要跳步，遇到报错把完整报错贴给用户。
+
+```bash
+# 1. 装系统依赖（Ubuntu 20.04/22.04/24.04）
+sudo apt update
+sudo apt install -y git curl
+
+# 2. 装 Node.js 22 + pnpm 10（若已有可跳过）
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt install -y nodejs
+sudo npm install -g pnpm@10
+
+# 3. 拉取源码
+git clone https://github.com/oracle9i88/clash-helen.git
+cd clash-helen
+
+# 4. 构建（5-10 分钟，需要约 2GB 内存）
+pnpm install
+pnpm prepare
+pnpm build:linux
+
+# 5. 安装产物（.deb 在 dist/ 目录下）
+sudo apt install ./dist/clash-helen-linux-*-amd64.deb
+```
+
+> ⚠️ 构建需要约 2GB 内存；若机器内存小，先加 swap：`sudo fallocate -l 4G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile`
+
+### 安装后验证（逐项执行，全部应通过）
+
+```bash
+# ① 启动 app（图形界面，或先日志排查）
+clash-helen
+
+# ② 验证 hy2 节点导入（本次修复的核心）
+#    打开「订阅管理」→「导入 URI」，粘贴你的 hysteria2:// 或 hy2:// 节点
+#    预期：导入成功后订阅里能看到节点；失败时会弹出具体错误信息（不再是空成功）
+
+# ③ 验证规则编辑立即生效
+#    「订阅管理」→ 点击订阅卡片 →「编辑规则」→ 加一条 DOMAIN-SUFFIX,example.com,DIRECT → 保存
+#    预期：保存后内核自动重载，立即生效（不再需要重启 app）
+
+# ④ 验证 TUN 断网自愈（最重要）
+#    打开「TUN 模式」→ 确认能上网 → 终端执行：
+sudo killall -9 mihomo
+#    预期：90 秒内 app 自动发现核心挂死并恢复；若恢复失败，
+#         自动关闭 TUN、清除残留路由、恢复 DNS —— 机器不会断网
+#    若手动恢复（兜底失败时）：
+sudo ip link delete Mihomo
+sudo cp /var/tmp/clash-helen-resolv.conf.bak $(readlink -f /etc/resolv.conf) 2>/dev/null || true
+sudo systemctl restart NetworkManager
+```
+
+**验证通过的判定标准**：
+- ②③④ 全部符合预期 → 修复版构建成功
+- ② 失败 → 把弹出的错误信息和节点 URI 格式（密码可打码）反馈给开发者
+- ④ 手动恢复命令都无效 → 检查 `getcap /opt/clash-helen/resources/sidecar/mihomo` 是否有 `cap_net_admin`
+
+---
+
 ## Build from Source · 从源码构建
 
 ### Prerequisites
